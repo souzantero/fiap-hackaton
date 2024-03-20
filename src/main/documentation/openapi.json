@@ -1,0 +1,103 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FIAP Hackathon",
+    "description": "API para o Hackathon da FIAP",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Felipe Antero",
+      "email": "souzantero@gmail.com",
+      "url": "https://linkedin.com/in/souzantero"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "Servidor de desenvolvimento"
+    }
+  ],
+  "paths": {
+    "/time-clocks/register": {
+      "post": {
+        "summary": "Registrar ponto",
+        "description": "Registra um ponto para um funcionário",
+        "tags": [
+          "TimeClock"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ponto registrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeClock"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem de erro",
+            "example": "Erro ao executar a operação"
+          }
+        }
+      },
+      "TimeClock": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador do ponto",
+            "example": "5f8f3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e"
+          },
+          "accountId": {
+            "type": "string",
+            "description": "Identificador do funcionário",
+            "example": "5f8f3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Data e hora do ponto",
+            "example": "2021-10-21T10:00:00Z"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo do ponto",
+            "example": "IN"
+          }
+        }
+      }
+    }
+  }
+}
