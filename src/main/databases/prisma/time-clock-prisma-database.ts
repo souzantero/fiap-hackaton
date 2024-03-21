@@ -7,22 +7,32 @@ import {
 import { TimeClockRepository } from '../../../core/domain/repositories';
 
 function sumTotalHoursWorked(timeClocks: TimeClockEntity[]): number {
+  const sortedTimeClocks = timeClocks.sort(
+    (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+  );
+
   let totalHoursWorked = 0;
+  let lastClockIn: Date | null = null;
 
-  for (let i = 0; i < timeClocks.length; i += 2) {
-    // Ensure there's a pair to work with
-    if (i + 1 < timeClocks.length) {
-      const clockIn = timeClocks[i].timestamp;
-      const clockOut = timeClocks[i + 1].timestamp;
-
-      // Calculate the difference in hours
+  for (const timeClock of sortedTimeClocks) {
+    if (timeClock.type === 'IN') {
+      lastClockIn = timeClock.timestamp;
+    } else if (timeClock.type === 'OUT' && lastClockIn) {
       const hoursWorked =
-        (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+        (timeClock.timestamp.getTime() - lastClockIn.getTime()) /
+        (1000 * 60 * 60);
       totalHoursWorked += hoursWorked;
+      lastClockIn = null; // Reset for the next session
     }
   }
 
   return totalHoursWorked;
+}
+
+function formatTotalHoursWorked(totalHoursWorked: number): string {
+  const hours = Math.floor(totalHoursWorked);
+  const minutes = Math.floor((totalHoursWorked - hours) * 60);
+  return `${hours}:${minutes.toString().padStart(2, '0')}`;
 }
 
 export class TimeClockPrismaDatabase implements TimeClockRepository {
@@ -63,7 +73,7 @@ export class TimeClockPrismaDatabase implements TimeClockRepository {
         timestamp: timeClock.timestamp,
         type: timeClock.type as any,
       })),
-      totalHoursWorked: new Date(totalHoursWorked).toISOString().substr(11, 8),
+      totalHoursWorked: formatTotalHoursWorked(totalHoursWorked),
     };
   }
 
@@ -72,7 +82,7 @@ export class TimeClockPrismaDatabase implements TimeClockRepository {
     year: number,
     month: number,
   ): Promise<TimeClockReport> {
-    const timeClocks = await this.prisma.timeClock.findMany({
+    const records = await this.prisma.timeClock.findMany({
       where: {
         accountId,
         timestamp: {
@@ -85,65 +95,35 @@ export class TimeClockPrismaDatabase implements TimeClockRepository {
       },
     });
 
-    const records: TimeClockReport['records'] = [];
-    let currentDay = '';
-    let currentDayTimeClocks: TimeClock[] = [];
-    for (const timeClock of timeClocks) {
-      const day = timeClock.timestamp.toISOString().split('T')[0];
-      if (currentDay !== day) {
-        if (currentDayTimeClocks.length > 0) {
-          records.push({
-            date: currentDay,
-            entries: currentDayTimeClocks,
-            totalHoursWorked: new Date(
-              currentDayTimeClocks.reduce((acc, timeClock, index) => {
-                if (index % 2 === 0) {
-                  const inTime = timeClock.timestamp;
-                  const outTime = currentDayTimeClocks[index + 1].timestamp;
-                  const diff = outTime.getTime() - inTime.getTime();
-                  return acc + diff;
-                }
-                return acc;
-              }, 0),
-            )
-              .toISOString()
-              .substr(11, 8),
-          });
-        }
-        currentDay = day;
-        currentDayTimeClocks = [];
+    const timeClocksByDay: Record<string, TimeClockEntity[]> = {};
+    for (const record of records) {
+      const date = record.timestamp.toISOString().split('T')[0];
+      if (!timeClocksByDay[date]) {
+        timeClocksByDay[date] = [];
       }
-      currentDayTimeClocks.push({
-        accountId: timeClock.accountId,
-        timestamp: timeClock.timestamp,
-        type: timeClock.type as any,
-      });
+      timeClocksByDay[date].push(record);
     }
-    if (currentDayTimeClocks.length > 0) {
-      records.push({
-        date: currentDay,
-        entries: currentDayTimeClocks,
-        totalHoursWorked: new Date(
-          currentDayTimeClocks.reduce((acc, timeClock, index) => {
-            if (index % 2 === 0) {
-              const inTime = timeClock.timestamp;
-              const outTime = currentDayTimeClocks[index + 1].timestamp;
-              const diff = outTime.getTime() - inTime.getTime();
-              return acc + diff;
-            }
-            return acc;
-          }, 0),
-        )
-          .toISOString()
-          .substr(11, 8),
-      });
-    }
+
+    const timeClockSummaries = Object.entries(timeClocksByDay).map(
+      ([date, timeClocks]) => {
+        const totalHoursWorked = sumTotalHoursWorked(timeClocks);
+        return {
+          date,
+          entries: timeClocks.map((timeClock) => ({
+            accountId: timeClock.accountId,
+            timestamp: timeClock.timestamp,
+            type: timeClock.type as any,
+          })),
+          totalHoursWorked: formatTotalHoursWorked(totalHoursWorked),
+        };
+      },
+    );
 
     return {
       accountId,
       year,
       month,
-      records,
+      records: timeClockSummaries,
     };
   }
 }

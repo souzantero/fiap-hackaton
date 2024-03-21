@@ -1,7 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 
 export class PrismaDatabase {
-  constructor(private readonly prisma: PrismaClient = new PrismaClient()) {}
+  private static instance: PrismaDatabase;
+
+  private constructor(
+    private readonly prisma: PrismaClient = new PrismaClient(),
+  ) {}
+
+  static getInstance(): PrismaDatabase {
+    if (!PrismaDatabase.instance) {
+      PrismaDatabase.instance = new PrismaDatabase();
+    }
+
+    return PrismaDatabase.instance;
+  }
 
   get client(): PrismaClient {
     return this.prisma;
