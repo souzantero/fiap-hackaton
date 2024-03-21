@@ -18,6 +18,7 @@ model Account {
   deletedAt DateTime?
 
   username   String
+  email      String
   timeClocks TimeClock[]
 }
 
