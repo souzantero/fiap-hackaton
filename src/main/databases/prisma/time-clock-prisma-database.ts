@@ -1,10 +1,29 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TimeClock as TimeClockEntity } from '@prisma/client';
 import {
   TimeClock,
   TimeClockSummary,
   TimeClockReport,
 } from '../../../core/domain/entities';
 import { TimeClockRepository } from '../../../core/domain/repositories';
+
+function sumTotalHoursWorked(timeClocks: TimeClockEntity[]): number {
+  let totalHoursWorked = 0;
+
+  for (let i = 0; i < timeClocks.length; i += 2) {
+    // Ensure there's a pair to work with
+    if (i + 1 < timeClocks.length) {
+      const clockIn = timeClocks[i].timestamp;
+      const clockOut = timeClocks[i + 1].timestamp;
+
+      // Calculate the difference in hours
+      const hoursWorked =
+        (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+      totalHoursWorked += hoursWorked;
+    }
+  }
+
+  return totalHoursWorked;
+}
 
 export class TimeClockPrismaDatabase implements TimeClockRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -34,15 +53,7 @@ export class TimeClockPrismaDatabase implements TimeClockRepository {
     });
 
     // SUM all hours worked
-    const totalHoursWorked = timeClocks.reduce((acc, timeClock, index) => {
-      if (index % 2 === 0) {
-        const inTime = timeClock.timestamp;
-        const outTime = timeClocks[index + 1].timestamp;
-        const diff = outTime.getTime() - inTime.getTime();
-        return acc + diff;
-      }
-      return acc;
-    }, 0);
+    const totalHoursWorked = sumTotalHoursWorked(timeClocks);
 
     // convert result to TimeClockSummary
     return {

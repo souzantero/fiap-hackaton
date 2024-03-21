@@ -1,4 +1,13 @@
-import { TimeClock, TimeClockReport, TimeClockSummary } from './entities';
+import {
+  Account,
+  TimeClock,
+  TimeClockReport,
+  TimeClockSummary,
+} from './entities';
+
+export interface AccountRepository {
+  findByUsername(username: string): Promise<Account | null>;
+}
 
 export interface TimeClockRepository {
   register(timeClock: TimeClock): Promise<void>;

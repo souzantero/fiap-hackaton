@@ -2,7 +2,6 @@ export type Account = {
   id: string;
   email: string;
   username: string;
-  password: string;
 };
 
 export type TimeClock = {

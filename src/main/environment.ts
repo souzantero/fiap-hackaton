@@ -4,6 +4,8 @@ export interface Environment {
   readonly name: EnvironmentName;
   readonly port: number;
   readonly databaseUrl: string;
+  readonly cognitoClientId: string;
+  readonly cognitoClientSecret: string;
 }
 
 if (process.env.NODE_ENV) {
@@ -26,4 +28,6 @@ export const environment: Environment = {
   name: (process.env.NODE_ENV as EnvironmentName) || 'development',
   port: Number(process.env.PORT) ?? 3000,
   databaseUrl: process.env.DATABASE_URL ?? '',
+  cognitoClientId: process.env.AWS_COGNITO_CLIENT_ID ?? '',
+  cognitoClientSecret: process.env.AWS_COGNITO_CLIENT_SECRET ?? '',
 };
