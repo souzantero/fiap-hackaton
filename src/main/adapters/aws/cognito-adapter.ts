@@ -45,6 +45,7 @@ export class CognitoAdapter
 
       return { accessToken: response.AuthenticationResult.AccessToken };
     } catch (error) {
+      console.error('Error authenticating user: ', error);
       return null;
     }
   }
@@ -58,6 +59,7 @@ export class CognitoAdapter
       const { Username } = await this.cognito.getUser(params).promise();
       return { username: Username };
     } catch (error) {
+      console.error('Error authorizing user: ', error);
       return null;
     }
   }

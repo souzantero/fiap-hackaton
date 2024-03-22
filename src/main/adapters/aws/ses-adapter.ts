@@ -35,6 +35,7 @@ export class SESAdapter implements MessengerGateway {
       await this.ses.sendEmail(params).promise();
       return true;
     } catch (error) {
+      console.error('Error sending email: ', error);
       return false;
     }
   }
