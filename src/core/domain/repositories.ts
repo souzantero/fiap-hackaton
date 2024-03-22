@@ -6,6 +6,7 @@ import {
 } from './entities';
 
 export interface AccountRepository {
+  findById(id: string): Promise<Account | null>;
   findByUsername(username: string): Promise<Account | null>;
 }
 

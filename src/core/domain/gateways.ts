@@ -16,3 +16,7 @@ export interface AuthenticationGateway {
 export type AuthenticateResult = {
   accessToken: string;
 };
+
+export interface MessengerGateway {
+  sendMessage(email: string, title: string, message: string): Promise<boolean>;
+}

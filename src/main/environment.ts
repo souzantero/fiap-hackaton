@@ -6,6 +6,7 @@ export interface Environment {
   readonly databaseUrl: string;
   readonly cognitoClientId: string;
   readonly cognitoClientSecret: string;
+  readonly sesSource: string;
 }
 
 if (process.env.NODE_ENV) {
@@ -30,4 +31,5 @@ export const environment: Environment = {
   databaseUrl: process.env.DATABASE_URL ?? '',
   cognitoClientId: process.env.AWS_COGNITO_CLIENT_ID ?? '',
   cognitoClientSecret: process.env.AWS_COGNITO_CLIENT_SECRET ?? '',
+  sesSource: process.env.AWS_SES_SOURCE ?? '',
 };

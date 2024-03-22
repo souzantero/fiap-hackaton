@@ -1,6 +1,7 @@
-import { RegisterTimeClockService } from '../core/application/register-time-clock-service';
 import { AuthenticateService } from '../core/application/authenticate-service';
 import { AuthorizationService } from '../core/application/authorization-service';
+import { RegisterTimeClockService } from '../core/application/register-time-clock-service';
+import { ReportTimeClockService } from '../core/application/report-time-clock-service';
 import {
   Authenticate,
   Authorize,
@@ -15,7 +16,10 @@ import {
 import {
   AuthenticationGateway,
   AuthorizationGateway,
+  MessengerGateway,
 } from '../core/domain/gateways';
+import { HttpController } from '../core/presentation/http';
+import { LogHttpControllerDecorator } from '../core/presentation/log-http-controller-decorator';
 import { AuthorizationHttpMiddleware } from '../core/presentation/authorization-http-middleware';
 import { RegisterTimeClockHttpController } from '../core/presentation/register-time-clock-http-controller';
 import { SummaryTimeClockHttpController } from '../core/presentation/summary-time-clock-http-controller';
@@ -26,6 +30,7 @@ import { TimeClockPrismaDatabase } from './databases/prisma/time-clock-prisma-da
 import { AccountPrismaDatabase } from './databases/prisma/account-prisma-database';
 import { CognitoAdapter } from './adapters/aws/cognito-adapter';
 import { environment } from './environment';
+import { SESAdapter } from './adapters/aws/ses-adapter';
 
 // REPOSITORIES
 export const makeTimeClockRepository = (): TimeClockRepository =>
@@ -44,6 +49,8 @@ export const makeAuthenticationGateway = (): AuthenticationGateway =>
     environment.cognitoClientId,
     environment.cognitoClientSecret,
   );
+export const makeMessengerGateway = (): MessengerGateway =>
+  new SESAdapter(environment.sesSource);
 
 // USE CASES
 export const makeAuthorize = (): Authorize =>
@@ -55,7 +62,11 @@ export const makeRegisterTimeClock = (): RegisterTimeClock =>
 export const makeSummaryTimeClock = (): SummaryTimeClock =>
   makeTimeClockRepository();
 export const makeReportTimeClock = (): ReportTimeClock =>
-  makeTimeClockRepository();
+  new ReportTimeClockService(
+    makeTimeClockRepository(),
+    makeAccountRepository(),
+    makeMessengerGateway(),
+  );
 
 // MIDDLEWARES
 export const makeAuthorizationHttpMiddleware =
@@ -64,15 +75,23 @@ export const makeAuthorizationHttpMiddleware =
   };
 
 // CONTROLLERS
-export const makeRegisterTimeClockHttpController =
-  (): RegisterTimeClockHttpController =>
-    new RegisterTimeClockHttpController(makeRegisterTimeClock());
-export const makeSummaryTimeClockHttpController =
-  (): SummaryTimeClockHttpController =>
-    new SummaryTimeClockHttpController(makeSummaryTimeClock());
-export const makeReportTimeClockHttpController =
-  (): ReportTimeClockHttpController =>
-    new ReportTimeClockHttpController(makeReportTimeClock());
-export const makeAuthenticationHttpController =
-  (): AuthenticationHttpController =>
-    new AuthenticationHttpController(makeAuthenticate());
+export const makeLogHttpControllerDecorator = <T>(
+  httpController: HttpController<T>,
+): LogHttpControllerDecorator<T> =>
+  new LogHttpControllerDecorator(httpController);
+export const makeRegisterTimeClockHttpController = () =>
+  makeLogHttpControllerDecorator(
+    new RegisterTimeClockHttpController(makeRegisterTimeClock()),
+  );
+export const makeSummaryTimeClockHttpController = () =>
+  makeLogHttpControllerDecorator(
+    new SummaryTimeClockHttpController(makeSummaryTimeClock()),
+  );
+export const makeReportTimeClockHttpController = () =>
+  makeLogHttpControllerDecorator(
+    new ReportTimeClockHttpController(makeReportTimeClock()),
+  );
+export const makeAuthenticationHttpController = () =>
+  makeLogHttpControllerDecorator(
+    new AuthenticationHttpController(makeAuthenticate()),
+  );
