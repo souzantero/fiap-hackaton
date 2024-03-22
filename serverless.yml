@@ -14,6 +14,9 @@ provider:
   runtime: nodejs20.x
   environment:
     DATABASE_URL: ${env:DATABASE_URL}
+    AWS_COGNITO_CLIENT_ID: ${env:AWS_COGNITO_CLIENT_ID}
+    AWS_COGNITO_CLIENT_SECRET: ${env:AWS_COGNITO_CLIENT_SECRET}
+    AWS_SES_SOURCE: ${env:AWS_SES_SOURCE}
   tags:
     PROJECT: fiap-hackathon
 
