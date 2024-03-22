@@ -5,6 +5,18 @@ import {
   TimeClockSummary,
 } from './entities';
 
+export interface Authenticate {
+  authenticate(
+    username: string,
+    password: string,
+  ): Promise<AuthenticatedAccount | null>;
+}
+
+export type AuthenticatedAccount = {
+  accessToken: string;
+  account: Account;
+};
+
 export interface Authorize {
   authorize(accessToken: string): Promise<Account | null>;
 }

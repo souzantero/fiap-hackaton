@@ -45,6 +45,7 @@ export enum HttpStatus {
   Created = 201,
   NoContent = 204,
   BadRequest = 400,
+  Unauthorized = 401,
   Forbidden = 403,
   NotFound = 404,
   InternalServer = 500,
@@ -80,5 +81,11 @@ export class NotFoundError extends HttpError {
 export class ForbiddenError extends HttpError {
   constructor(message: string) {
     super(HttpStatus.Forbidden, message);
+  }
+}
+
+export class UnauthorizedError extends HttpError {
+  constructor(message: string) {
+    super(HttpStatus.Unauthorized, message);
   }
 }
