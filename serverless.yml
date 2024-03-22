@@ -19,6 +19,12 @@ provider:
     AWS_SES_SOURCE: ${env:AWS_SES_SOURCE}
   tags:
     PROJECT: fiap-hackathon
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "ses:SendEmail"
+        - "ses:SendRawEmail"
+      Resource: "*"
 
 functions:
   api:
